@@ -1,37 +1,21 @@
 steps:
-  # 1. Package and upload the encrypted data layer
+  # 1. Fetch encrypted data and application source archives
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'package-and-upload-data'
+    id: 'fetch-build-archives'
     entrypoint: 'bash'
-    secretEnv:
-      - 'AUTH_SECRET'
     args:
       - '-euo'
       - 'pipefail'
       - '-c'
       - |
-        apt-get update
-        apt-get install -y --no-install-recommends zip
-        bash scripts/package-and-upload.sh "${_DATA_BUCKET}"
+        gsutil cp \
+          "gs://${_DATA_BUCKET}/data.zip" \
+          "gs://${_DATA_BUCKET}/app-source.zip" \
+          .
 
-  # 2. Fetch encrypted data.zip from GCP Cloud Storage Bucket
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'fetch-encrypted-data'
-    entrypoint: 'bash'
-    waitFor: ['package-and-upload-data']
-    args:
-      - '-euo'
-      - 'pipefail'
-      - '-c'
-      - |
-        archive="data.zip"
-        source_uri="gs://${_DATA_BUCKET}/${archive}"
-        echo "Fetching encrypted archive from ${source_uri}..."
-        gsutil cp "${source_uri}" "${archive}"
-
-  # 3. Decrypt & unpack data.zip with password into ./data
+  # 2. Decrypt the archives; restore app files at the Docker build-context root
   - name: 'alpine'
-    id: 'unpack-encrypted-data'
+    id: 'unpack-build-archives'
     entrypoint: 'sh'
     secretEnv:
       - 'AUTH_SECRET'
@@ -44,14 +28,16 @@ steps:
         echo "Unpacking encrypted data layer..."
         unzip -q -P "$$AUTH_SECRET" ./data.zip -d ./data
         rm -f ./data.zip
-        echo "Data unpacked successfully. Files:"
-        ls -la ./data
+        echo "Unpacking application source into the Docker build context..."
+        unzip -q -P "$$AUTH_SECRET" ./app-source.zip -d .
+        rm -f ./app-source.zip
+        echo "Archives unpacked successfully."
 
-  # 4. Build and push Docker image (Next.js standalone + data layer)
+      # 3. Build and push Docker image (Next.js standalone + data layer)
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-and-push'
     entrypoint: 'bash'
-    waitFor: ['unpack-encrypted-data']
+    waitFor: ['unpack-build-archives']
     args:
       - '-euo'
       - 'pipefail'
@@ -62,7 +48,7 @@ steps:
         docker push "${image}:$COMMIT_SHA"
         docker push "${image}:latest"
 
-  # 5. Deploy to Google Cloud Run
+  # 4. Deploy to Google Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-cloud-run'
     entrypoint: 'bash'
