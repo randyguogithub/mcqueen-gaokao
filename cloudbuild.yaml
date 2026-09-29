@@ -1,0 +1,73 @@
+steps:
+  # 1. Fetch encrypted data.zip from GCP Cloud Storage Bucket
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'fetch-encrypted-data'
+    entrypoint: 'bash'
+    scrtipt:
+        echo "Fetching encrypted data.zip from gs://${_DATA_BUCKET}/data.zip..."
+        gsutil cp gs://${_DATA_BUCKET}/data.zip ./data.zip
+
+  # 2. Decrypt & unpack data.zip with password into ./data
+  - name: 'alpine'
+    id: 'unpack-encrypted-data'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        apk add --no-cache unzip
+        mkdir -p ./data
+        echo "Unpacking encrypted data layer..."
+        unzip -q -P ${_ZIP_PASSWORD} ./data.zip -d ./data
+        rm -f ./data.zip
+        echo "Data unpacked successfully. Files:"
+        ls -la ./data
+
+  # 3. Build Docker container image (Next.js standalone + data layer)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-build'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest'
+      - '.'
+
+  # 4. Push Docker image to Container / Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-push'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+
+  # 5. Deploy to Google Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-cloud-run'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'AUTH_PASSWORD=${_ZIP_PASSWORD},AUTH_SECRET=${_AUTH_SECRET},DATA_DIR=/app/data'
+
+substitutions:
+  _DATA_BUCKET: 'mcqueen-gaokao-data'
+  _ZIP_PASSWORD: '20270606'
+  _AUTH_SECRET: 'mcqueen_gaokao_secret'
+  _REGION: 'asia-east1'
+  _SERVICE_NAME: 'mcqueen-gaokao'
+
+images:
+  - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Sensitive data files (kept in local only, synced via encrypted GCP bucket)
+01-成绩档案.md
+02-高考定位分析.md
+03-大学与专业池.md
+04-导师分析·高三开局致骞.md
+05-高三升学定位与破局战略·汇报讲义与PPT大纲.md
+06-9.17统考深度诊断·题目录入与小题得分全景复盘.md
+高三升学定位与破局战略-PPT演示.html
+1306060014_郭渝骞/
+学校官方数据/
+成绩原始材料/
+data/
+*.zip
+
+# Environment & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# System files
+.DS_Store
+Thumbs.db
+
+*.
+next-env.d.ts
+next.config.mjs
+package-lock.json
+package.json
+postcss.config.mjs
+README.md
+tailwind.config.ts
+tsconfig.json
+!scripts/package-and-upload.sh
+src/app/globals.css
+src/app/layout.tsx
+src/app/page.tsx
+src/app/api/auth/check/route.ts
+src/app/api/auth/login/route.ts
+src/app/api/auth/logout/route.ts
+src/app/api/content/route.ts
+src/components/CountdownWidget.tsx
+src/components/DashboardView.tsx
+src/components/DiagnosisView.tsx
+src/components/MentorLetterView.tsx
+src/components/Navbar.tsx
+src/components/PresentationView.tsx
+src/components/SchoolReportView.tsx
+src/components/ScoresView.tsx
+src/components/UniversitiesView.tsx
+src/components/UnlockScreen.tsx
+src/lib/auth.ts
+src/lib/data.ts
+Dockerfile
+.dockerignore
+.env.example
+scripts/package-and-upload.sh
