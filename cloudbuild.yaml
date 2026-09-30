@@ -8,7 +8,7 @@ steps:
       - 'pipefail'
       - '-c'
       - |
-        gsutil cp \
+        gcloud storage cp \
           "gs://${_DATA_BUCKET}/data.zip" \
           "gs://${_DATA_BUCKET}/app-source.zip" \
           .
@@ -28,6 +28,7 @@ steps:
         echo "Unpacking encrypted data layer..."
         unzip -q -P "$$AUTH_SECRET" ./data.zip -d ./data
         rm -f ./data.zip
+        cp -f ./data/1306060014_郭渝骞/stu_ameqp_report.js ./data/stu_ameqp_report.js 2>/dev/null || true
         echo "Unpacking application source into the Docker build context..."
         unzip -q -P "$$AUTH_SECRET" ./app-source.zip -d .
         rm -f ./app-source.zip
