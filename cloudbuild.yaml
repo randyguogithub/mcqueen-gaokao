@@ -1,3 +1,4 @@
+# version: '1.0'
 steps:
   # 1. Fetch encrypted data and application source archives
   - name: 'gcr.io/cloud-builders/gcloud'
