@@ -64,7 +64,7 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --set-env-vars 'DATA_DIR=/app/data' \
-          --set-secrets 'AUTH_PASSWORD=AUTH_SECRET:latest,AUTH_SECRET=AUTH_SECRET:latest'
+          --set-secrets 'AUTH_PASSWORD=mcqueen_gaokao_secret:latest,AUTH_SECRET=mcqueen_gaokao_secret:latest'
 
 availableSecrets:
   secretManager:
