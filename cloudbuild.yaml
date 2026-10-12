@@ -46,8 +46,8 @@ steps:
       - '-c'
       - |
         image="gcr.io/$PROJECT_ID/${_SERVICE_NAME}"
-        docker build -t "${image}:$COMMIT_SHA" -t "${image}:latest" -f Dockerfile .
-        docker push "${image}:$COMMIT_SHA"
+        docker build -t "${image}:${_COMMIT_SHA}" -t "${image}:latest" -f Dockerfile .
+        docker push "${image}:${_COMMIT_SHA}"
         docker push "${image}:latest"
 
   # 4. Deploy to Google Cloud Run
@@ -61,11 +61,11 @@ steps:
       - '-c'
       - |
         gcloud run deploy "${_SERVICE_NAME}" \
-          --image "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA" \
+          --image "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:${_COMMIT_SHA}" \
           --region "${_REGION}" \
           --platform managed \
           --allow-unauthenticated \
-          --set-env-vars 'DATA_DIR=/app/data' \
+          --set-env-vars 'DATA_DIR=/app/data,GCP_PROJECT_ID=randyguo-test-43165062,GOOGLE_CLOUD_PROJECT=randyguo-test-43165062' \
           --set-secrets 'AUTH_PASSWORD=mcqueen_gaokao_secret:latest,AUTH_SECRET=mcqueen_gaokao_secret:latest'
 
 availableSecrets:
@@ -77,9 +77,10 @@ substitutions:
   _DATA_BUCKET: 'mcqueen-gaokao-data'
   _REGION: 'asia-east2'
   _SERVICE_NAME: 'mcqueen-gaokao'
+  _COMMIT_SHA: 'manual'
 
 images:
-  - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:${_COMMIT_SHA}'
   - 'gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest'
 
 options:
